@@ -1,0 +1,218 @@
+<head>
+<meta charset="UTF-8" />
+<title>ちり毛神経衰弱</title>
+<style>
+body {
+  background-color: black;
+  color: white;
+}
+
+h1 {
+  font-family: 'serif';
+}
+
+.main {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.card {
+  width: 100px;
+  height: 100px;
+  background-color: white;
+  margin: 20px;
+  border: 4px solid white;
+}
+
+.card svg {
+  width: 100px;
+  height: 100px;
+}
+.card path {
+  stroke: black;
+  fill: transparent;
+  display: none;
+}
+
+.card.reveal path {
+  display: block
+}
+.card.capture {
+  border: 4px solid lime;
+}
+</style>
+
+<script>
+const makeConfig = (search) => {
+  const config = {}
+  search.slice(1).split('&').map((kv) => {
+    const [k, v] = kv.split('=')
+    config[k] = v
+  })
+  return config
+}
+
+const config = makeConfig(location.search)
+console.log(config)
+
+const CARD_SIZE = 100;
+const CARD_SIZE_PX = `${CARD_SIZE}px`
+
+const LEVEL = parseInt(config.level) || 4;
+const NUM_OF_CARDS = parseInt(config.num_of_cards) || 10;
+
+const ri = (n, m) => () => Math.floor(Math.random() * (m - n)) + n
+const f = ri(0, CARD_SIZE)
+const C = () => `C${f()} ${f()},${f()} ${f()},${f()} ${f()}`
+const M = () => `M${f()} ${f()}`
+const d = (n) => () => {
+    let s = M()
+    const nn = ri(1, n)();
+    for (let i = 0; i < nn; i++) {
+        s += ' ' + C()
+    }
+    return s
+}
+
+const shuffle = (ls) => {
+  const rs = [...ls];
+  const f = ri(0, ls.length)
+  ls.forEach(() => {
+    const [i, j] = [f(), f()];
+    [rs[i], rs[j]] = [rs[j], rs[i]]
+  })
+  return rs
+}
+
+const CARD_STATUS = {
+  CONCEAL: 'CONCEAL',
+  REVEAL: 'REVEAL',
+  CAPTURED: 'CAPTURED',
+}
+
+class Card {
+  constructor (path) {
+    this.path = path
+    this.status = CARD_STATUS.CONCEAL
+  }
+
+  reveal () {
+    if (this.status !== CARD_STATUS.CONCEAL) return
+    this.status = CARD_STATUS.REVEAL
+    this.$dom.classList.add('reveal')
+  }
+
+  conceal () {
+    if (this.status !== CARD_STATUS.REVEAL) return
+    this.status = CARD_STATUS.CONCEAL
+    this.$dom.classList.remove('reveal')
+  }
+
+  capture () {
+    if (this.status !== CARD_STATUS.REVEAL) return
+    this.status = CARD_STATUS.CAPTURED;
+    this.$dom.classList.add('capture')
+  }
+
+  render ($parent) {
+    const $div = document.createElement('div')
+    $div.classList.add('card')
+    $parent.appendChild($div)
+
+    const $svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    $svg.setAttribute('viewBox', `0 0 ${CARD_SIZE} ${CARD_SIZE}`)
+    $svg.setAttribute('width', CARD_SIZE_PX)
+    $svg.setAttribute('height', CARD_SIZE_PX)
+    $div.appendChild($svg)
+
+    const $path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    $path.setAttribute('d', this.path)
+    $svg.appendChild($path)
+
+    this.$path = $path
+    this.$dom = $div;
+  }
+}
+
+class Game {
+  constructor (cards) {
+    this.cards = cards
+    this.first = null
+    this.timeout = null
+  }
+
+  open (idx) {
+    if (this.timeout != null) return
+    if (this.first === idx) {
+      this.cards[this.first].conceal();
+      this.first = null
+      return;
+    }
+
+    const card = this.cards[idx];
+    if (card.status === CARD_STATUS.CAPTURED) return;
+    card.reveal();
+
+    if (this.first == null) {
+      this.first = idx
+      return
+    }
+
+    const firstCard = this.cards[this.first]
+    this.first = null
+    if (firstCard.path === card.path) {
+      firstCard.capture()
+      card.capture()
+      return
+    }
+
+    this.timeout = setTimeout(() => {
+      this.first = null
+      firstCard.conceal();
+      card.conceal();
+      this.timeout = null
+    }, 700)
+  }
+
+  render ($main) {
+    this.cards.forEach((card, idx) => {
+      const $div = document.createElement('div');
+      $div.onclick = () => {
+        console.log('onclick', idx);
+        this.open(idx)
+      }
+      $main.appendChild($div)
+      card.render($div);
+    })
+  }
+}
+
+const makeCards = (l, m) => {
+  // l: レベル
+  // m: 組み合わせ数
+  const s = Array.from(Array(m), d(l))
+  return shuffle([...s, ...s]).map((path) => new Card(path));
+}
+
+const game = new Game(makeCards(LEVEL, NUM_OF_CARDS))
+
+const onload = () => {
+  const $main = document.getElementById('main')
+  game.render($main)
+  const $level = document.getElementById('level')
+  $level.innerText = LEVEL
+
+  const $numOfCards = document.getElementById('num_of_cards')
+  $numOfCards.innerText = `${NUM_OF_CARDS} 種 ${2 * NUM_OF_CARDS} 枚`
+}
+</script>
+</head>
+<body onload="onload()">
+<h1>ちり毛神経衰弱</h1>
+<div>
+  <p>レベル<span id="level"></span></p>
+  <p>カード枚数<span id="num_of_cards"></span></p>
+</div>
+<div id="main" class="main">
+</div>
+</body>
