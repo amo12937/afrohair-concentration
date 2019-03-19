@@ -77,9 +77,9 @@ const d = (n) => () => {
 const shuffle = (ls) => {
   const rs = [...ls];
   const f = ri(0, ls.length)
-  ls.forEach(() => {
-    const [i, j] = [f(), f()];
-    [rs[i], rs[j]] = [rs[j], rs[i]]
+  ls.forEach((x, idx) => {
+    const i = f();
+    [rs[i], rs[idx]] = [rs[idx], rs[i]]
   })
   return rs
 }
