@@ -1,0 +1,17 @@
+# Environment variables
+.env
+
+# Node modules (for future use)
+node_modules/
+
+# Build output (for future use)
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
