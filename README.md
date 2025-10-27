@@ -21,7 +21,9 @@ URLクエリパラメータで難易度を調整できます：
 
 ### GitHub MCP サーバーの設定
 
-このプロジェクトでは、GitHub issue 管理などに GitHub MCP サーバーを使用します。
+このプロジェクトでは、GitHub issue 管理などに **GitHub 公式のリモート MCP サーバー**を使用します。
+
+このサーバーは HTTP ベースで動作するため、Claude Code on the Web でも利用できる可能性があります。
 
 #### 1. GitHub Personal Access Token の作成
 
@@ -42,20 +44,33 @@ cp .env.example .env
 # GITHUB_PERSONAL_ACCESS_TOKEN=your_actual_token_here
 ```
 
-#### 3. MCP サーバーの有効化
+#### 3. MCP サーバーの設定内容
 
-Claude Code で MCP サーバーを有効にします：
+`.mcp.json` には以下の設定が含まれています：
 
-```bash
-# プロジェクトディレクトリで以下を実行
-claude mcp add github --scope project
+```json
+{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
 ```
 
-または、`.mcp.json` ファイルが自動的に読み込まれます。
+この設定は GitHub が公式にホストしている HTTP ベースの MCP サーバーに接続します。
 
 #### 4. 動作確認
 
-Claude Code を再起動後、GitHub 関連の操作（issue 作成など）が利用可能になります。
+環境変数を設定後、Claude Code を再起動すると、GitHub 関連の操作（issue 作成など）が利用可能になります。
+
+**注意**:
+- デスクトップ版の Claude Code では確実に動作します
+- Claude Code on the Web での動作は環境により異なる場合があります
 
 ## ライセンス
 
@@ -65,3 +80,4 @@ MIT
 
 - 2019-03-20: 初回リリース
 - 2025-10-26: MCP サーバー設定追加
+- 2025-10-27: HTTP ベースの GitHub 公式 MCP サーバーに移行
